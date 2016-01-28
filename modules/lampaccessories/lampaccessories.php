@@ -31,8 +31,7 @@ class LampAccessories extends Module {
       Shop::setContext(Shop::CONTEXT_ALL);
 
     return parent::install() &&
-    $this->registerHook('leftColumn') &&
-    $this->registerHook('rightColumn') &&
+    $this->registerHook('lampAccessories') &&
     $this->registerHook('header') &&
     Configuration::updateValue('LAMPACCESSORIES_NAME', 'Lamp Accessories');
   }
@@ -125,9 +124,74 @@ class LampAccessories extends Module {
   }
 
 
-  public function hookDisplayLeftColumn(&$params) {
-    $this->context->smarty->assign(
+  public function hookLampAccessories(&$params) {
+    $la_per_tab = Configuration::get('LAMPACCESSORIES_PER_TAB');
+    if(empty($la_per_tab)) {
+      $la_per_tab = 4;
+      Configuration::set('LAMPACCESSORIES_PER_TAB', 4);
+    }
+    $context = Context::getContext();
+    $controller = $context->controller;
+    $id_lang = (int)$context->language->id;
+    /**
+     * @var $prod Product
+     */
+    $prod = $controller->getProduct();
+    if(empty($prod)) {
+      return '';
+    }
+
+
+    $features = $prod->getFeatures($id_lang);
+    $id_feature_value = null;
+    foreach ($features as $feature) {
+      if($feature['id_feature'] == 16) {
+        $id_feature_value = $feature['id_feature_value'];
+      }
+    }
+
+    if(empty($id_feature_value))
+      return '';
+
+    $lampIdCategory = 42;
+    $lampIdCategory = $prod->id_category_default;
+    $lampIdCategories = array($lampIdCategory);
+    $lampCategories = CategoryCore::getChildren($lampIdCategory, $id_lang);
+    foreach($lampCategories as $lampCategory) {
+      $lampIdCategories[] = $lampCategory['id_category'];
+    }
+    $sCatIds = join(', ', $lampIdCategories);
+// $sCatIds=$prod->id_category_default;
+    $sql = "SELECT p.*, pl.*, cl.name AS category, f.*, i.id_image
+      FROM ps_product p
+      JOIN ps_product_lang pl ON pl.id_product = p.id_product AND pl.id_lang={$id_lang}
+      JOIN ps_category_lang cl ON cl.id_category=p.id_category_default AND cl.id_lang={$id_lang}
+      JOIN ps_feature_product f
+        ON f.id_product = p.id_product
+          AND f.id_feature_value = {$id_feature_value}
+      LEFT JOIN ps_image i
+        ON i.id_product = p.id_product
+          AND i.cover=1
+      WHERE p.id_category_default IN ($sCatIds)
+      ";
+
+    $lampAccessoriesAll = Db::getInstance()->executeS(
+      $sql
+    );
+
+    $lampAccessories = array();
+    foreach($lampAccessoriesAll as $lampAccessory) {
+      if(count($lampAccessories[$lampAccessory['category']])>=$la_per_tab)
+        continue;
+      $imageLink = LinkCore::getImageLink($lampAccessory['link_rewrite'], $lampAccessory['id_image']);
+      $lampAccessory['image_link'] = 'http://' .$imageLink;
+      $lampAccessories[$lampAccessory['category']][] = $lampAccessory;
+    }
+
+
+      $this->context->smarty->assign(
       array(
+        'lampaccessories' => $lampAccessories,
         'my_module_name' => Configuration::get('LAMPACCESSORIES_NAME'),
         'my_module_link' => $this->context->link->getModuleLink('lampaccessories', 'display')
       )
@@ -136,7 +200,7 @@ class LampAccessories extends Module {
   }
 
   public function hookDisplayRightColumn(&$params) {
-    return $this->hookDisplayLeftColumn($params);
+    return $this->hookLampAccessories($params);
   }
 
   public function hookDisplayHeader()

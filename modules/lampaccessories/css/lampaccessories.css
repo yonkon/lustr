@@ -1,4 +1,137 @@
-div#lampaccessories_block_left p {
-  font-size: 150%;
-  font-style:italic;
+.lampaccessories-tabs-container li:hover,
+.lampaccessories-tabs-container li.active {
+  background: #feb501;
+}
+.lampaccessories-tabs-container li a {
+  font-size: 12px;
+}
+.lampaccessories-tabs-container li a:hover,
+.lampaccessories-tabs-container li a.active {
+  background: #feb501;
+}
+.lampaccessories-tabs-container .nav-tabs {
+  display: table;
+  width: 100%;
+}
+
+
+
+.lampaccessories-tabs-container {
+  width: 40%;
+  display: inline-block;
+  vertical-align: top;
+  /*margin-left: 5%;*/
+  float: right;
+}
+
+.lampaccessories_pr_img {
+  width: 100px;
+  height: 100px;
+  display: inline-block;
+  background: transparent center no-repeat;
+  background-size: contain;
+}
+
+.lampaccessories_pr_line>div {
+  vertical-align: top;
+}
+
+.lampaccessories_pr_text {
+  width: calc(98% - 115px);
+  display: inline-block;
+  margin-left: 15px;
+}
+
+.lampaccessories_pr_name,  .lampaccessories_pr_desc {
+  font-size: 12pt;
+  padding-bottom: 6px;
+}
+
+.lampaccessories_pr_controls {
+  margin-top: 0.5em;
+}
+
+
+/*a.lampaccessories_pr_incr, a.lampaccessories_pr_decr {
+  width: 16px;
+  display: inline-block;
+  height: 16px;
+  background: #FEB501;
+  text-align: center;
+  border-radius: 50%;
+  font-weight: bolder;
+  color: white !important;
+  font-size: 12px;
+  text-decoration: none;
+}*/
+a.lampaccessories_pr_incr,
+a.lampaccessories_pr_decr {
+  font-size: 0;
+  color: transparent;
+}
+
+a.lampaccessories_pr_incr:before,
+a.lampaccessories_pr_decr:before {
+  content: "\f055";
+  font-size: 16px;
+  display: inline-block;
+  color: #feb501;
+  font-family: fontawesome;
+  cursor: pointer;
+}
+a.lampaccessories_pr_decr:before {
+  content: "\f056";
+}
+
+input.lampaccessories_pr_count {
+  border: 0;
+  font-size: 18px;
+  max-width: 30px;
+  padding: 1px 5px;
+  text-align: center;
+  background: none;
+}
+
+input.lampaccessories_pr_count[disabled] {
+  background: none;
+}
+input.lampaccessories_pr_count:focus {
+  border: 0;
+  box-shadow: none;
+  outline: none;
+}
+
+a.lampaccessories_pr_buy {
+  margin-left: 4%;
+  background: #feb501;
+  padding: 9px 20px;
+  font-weight: bold;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+@media (max-width:900px) {
+  a.lampaccessories_pr_name, a.lampaccessories_pr_desc {
+    font-size: 100%;
+    padding-bottom: 4px;
+  }
+  a.lampaccessories_pr_buy {
+    padding: 4px;
+    font-size: 90%;
+  }
+}
+
+@media (max-width:768px) {
+  a.lampaccessories_pr_name, a.lampaccessories_pr_desc {
+    font-size: 12pt;
+    padding-bottom: 6px;
+  }
+  .lampaccessories-tabs-container {
+    float: none;
+    width: 100%;
+  }
+  a.lampaccessories_pr_buy {
+    padding: 9px 20px;
+    font-size: 12pt;
+  }
 }
