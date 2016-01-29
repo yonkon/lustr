@@ -5,10 +5,14 @@
       {/if} -->
 <div class="lampaccessories-tabs-container">
   <ul class="nav nav-tabs la-nav-tabs">
+    {assign var="bActive" value="0"}
     {foreach $lampaccessories as $lampaccessoryCategory}
-      <li><a href="#lamp_category{$lampaccessoryCategory[0]['id_category_default']}" data-toggle="tab"
-             id="lamp_category{$lampaccessoryCategory[0]['id_category_default']}_link">{$lampaccessoryCategory[0]['category']}</a>
+      <li {if $bActive==0}class="active"{/if}><a href="#lamp_category{$lampaccessoryCategory[0]['id_category_default']}" data-toggle="tab"
+             id="lamp_category{$lampaccessoryCategory[0]['id_category_default']}_link">
+          {$lampaccessoryCategory[0]['category']}</a>
       </li>
+      {assign var="bActive" value="1"}
+
     {/foreach}
     {*
           <li><a href="#idTab311" data-toggle="tab" id="st_easy_tab_1">Доставка и оплата</a></li>
@@ -17,9 +21,11 @@
           *}
   </ul>
   <div class="tab-content la-tab-content">
+    {assign var="bActive" value="0"}
     {foreach $lampaccessories as $lampaccessoryCategory}
-    <section class="page-product-box tab-pane fade in active"
-             id="#lamp_category{$lampaccessoryCategory[0]['id_category_default']}">
+    <section class="page-product-box tab-pane fade in {if $bActive==0}active{/if}"
+             id="lamp_category{$lampaccessoryCategory[0]['id_category_default']}">
+      {assign var="bActive" value="1"}
       {foreach $lampaccessoryCategory as $lampaccessory}
       <div class="lampaccessories_pr_line">
         <div class="lampaccessories_pr_img" style="background-image: url('{$lampaccessory['image_link']}');">
@@ -43,6 +49,8 @@
           <input class="lampaccessories_pr_count" disabled="disabled" name="qty" value="1">
           <a class="lampaccessories_pr_decr">-</a>
           <a class="lampaccessories_pr_buy">Купить</a>
+            <span class="lampaccessories_error"></span>
+            <span class="lampaccessories_success"></span>
           </form>
         </div>
       </div>
@@ -51,25 +59,75 @@
   {/foreach}
   </section>
   {/foreach}
-  <section class="page-product-box tab-pane fade" id="idTab311">
-  </section>
 </div>
 </div>
 
-<script type="text/javascript">
+<div style="clear: both;"></div>
+<script type="text/javascript" >
   {literal}
-  $(document).ready(function(){
-    $('.lampaccessories_pr_buy').click(function(e) {
-      var $form = $(this).parents('form');
-      $.ajax({
-        url : '/',
-        data : $form.serialize()
-      })
-          .success(function(data){})
-          .error(function(data, data2){
-            console.dir(data);
-          })
-    });
+  $('.lampaccessories_pr_incr').click(function (e) {
+    e.preventDefault();
+    var $input = $(this).siblings('.lampaccessories_pr_count');
+    var old = parseInt($input.val());
+    $input.val(old + 1);
+  });
+  $('.lampaccessories_pr_decr').click(function (e) {
+    e.preventDefault();
+    $input = $(this).siblings('.lampaccessories_pr_count');
+    var old = parseInt($input.val());
+    old--;
+    if (old < 1)
+      old = 1;
+    $input.val(old);
+  });
+  $('.lampaccessories-tabs-container .nav-tabs a').click(function (e) {
+    e.preventDefault();
+    var $this = $(this);
+    $('.la-tab-content section').removeClass('active');
+    $($this.attr('href')).addClass('active');
+    console.dir($($this.attr('href')));
+  });
+  $('.lampaccessories_pr_buy').click(function (e) {
+    e.preventDefault();
+    var $form = $(this).parents('form');
+    var $successSpan = $form.find('.lampaccessories_success');
+    var $errorSpan = $form.find('.lampaccessories_error');
+    $successSpan.html('');
+    $errorSpan.html('');
+    $.ajax({
+      url: '/',
+      data: $form.serialize()
+    })
+        .success(function (data) {
+          var res;
+          try {
+            res = JSON.parse(data);
+            if (res.hasError) {
+              $.each(res.errors, function (ei, error) {
+                var curError = $errorSpan.text();
+                $errorSpan.html(curError + error + '<br/>');
+                $errorSpan.show("slow");
+              });
+            } else {
+              $successSpan.text('Товар успешно добавлен в корзину');
+              $successSpan.show("slow");
+            }
+          } catch (e) {
+            $errorSpan.text('Товар не удалось добавить в корзину');
+            $errorSpan.show("slow");
+          }
+        })
+        .error(function (data, data2) {
+          console.dir(data);
+          $errorSpan.text('Серверу не удалось обработать запрос');
+          $errorSpan.show("slow");
+        })
+        .complete(function () {
+          setTimeout(function(){
+            $errorSpan.hide("slow");
+            $successSpan.hide("slow");
+          }, 5000);
+        });
   });
   {/literal}
 </script>

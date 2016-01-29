@@ -154,7 +154,7 @@ class LampAccessories extends Module {
       return '';
 
     $lampIdCategory = 42;
-    $lampIdCategory = $prod->id_category_default;
+//    $lampIdCategory = $prod->id_category_default;
     $lampIdCategories = array($lampIdCategory);
     $lampCategories = CategoryCore::getChildren($lampIdCategory, $id_lang);
     foreach($lampCategories as $lampCategory) {
@@ -206,6 +206,7 @@ class LampAccessories extends Module {
   public function hookDisplayHeader()
   {
     $this->context->controller->addCSS($this->_path.'css/lampaccessories.css', 'all');
+//    $this->context->controller->addJS($this->_path.'js/lampaccessories.js');
   }
 
 }

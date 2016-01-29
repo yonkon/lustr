@@ -32,6 +32,14 @@
   background-size: contain;
 }
 
+.lampaccessories_pr_line {
+  margin-bottom: 2em;
+}
+
+.lampaccessories_pr_line:hover {
+  box-shadow: rgba(249, 244, 230, 0.5) 0px 1px 33px 5px;
+}
+
 .lampaccessories_pr_line>div {
   vertical-align: top;
 }
@@ -134,4 +142,12 @@ a.lampaccessories_pr_buy {
     padding: 9px 20px;
     font-size: 12pt;
   }
+}
+
+.lampaccessories_pr_controls *{
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: -moz-none;
+  -o-user-select: none;
+  user-select: none;
 }
