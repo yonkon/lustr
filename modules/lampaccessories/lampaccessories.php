@@ -50,14 +50,24 @@ class LampAccessories extends Module {
 
     if (Tools::isSubmit('submit'.$this->name))
     {
-      $my_module_name = strval(Tools::getValue('LAMPACCESSORIES_NAME'));
-      if (!$my_module_name  || empty($my_module_name) || !Validate::isGenericName($my_module_name))
+      $la_tabcount = strval(Tools::getValue('LAMPACCESSORIES_TABCOUNT'));
+      if (!$la_tabcount  || empty($la_tabcount) || !Validate::isGenericName($la_tabcount))
         $output .= $this->displayError( $this->l('Invalid Configuration value') );
       else
       {
-        Configuration::updateValue('LAMPACCESSORIES_NAME', $my_module_name);
+        Configuration::updateValue('LAMPACCESSORIES_TABCOUNT', intval($la_tabcount));
         $output .= $this->displayConfirmation($this->l('Settings updated'));
       }
+
+      $la_itemcount = strval(Tools::getValue('LAMPACCESSORIES_ITEMCOUNT'));
+      if (!$la_itemcount  || empty($la_itemcount) || !Validate::isGenericName($la_itemcount))
+        $output .= $this->displayError( $this->l('Invalid Configuration value') );
+      else
+      {
+        Configuration::updateValue('LAMPACCESSORIES_ITEMCOUNT', intval($la_itemcount));
+        $output .= $this->displayConfirmation($this->l('Settings updated'));
+      }
+      
     }
     return $output.$this->displayForm();
   }
@@ -75,10 +85,19 @@ class LampAccessories extends Module {
       'input' => array(
         array(
           'type' => 'text',
-          'label' => $this->l('Configuration value'),
-          'name' => 'LAMPACCESSORIES_NAME',
+          'label' => $this->l('Максимальное количествово вкладок категорий лампочек'),
+          'name' => 'LAMPACCESSORIES_TABCOUNT',
           'size' => 20,
-          'required' => true
+          'required' => true,
+          'value' => Configuration::get('LAMPACCESSORIES_TABCOUNT')
+        ),
+        array(
+          'type' => 'text',
+          'label' => $this->l('Максимальное количествово лампочек на вкладку'),
+          'name' => 'LAMPACCESSORIES_ITEMCOUNT',
+          'size' => 20,
+          'required' => true,
+          'value' => Configuration::get('LAMPACCESSORIES_ITEMCOUNT')
         )
       ),
       'submit' => array(
@@ -118,18 +137,25 @@ class LampAccessories extends Module {
     );
 
     // Load current value
-    $helper->fields_value['LAMPACCESSORIES_NAME'] = Configuration::get('LAMPACCESSORIES_NAME');
+    $helper->fields_value['LAMPACCESSORIES_TABCOUNT'] = Configuration::get('LAMPACCESSORIES_TABCOUNT');
+    $helper->fields_value['LAMPACCESSORIES_ITEMCOUNT'] = Configuration::get('LAMPACCESSORIES_ITEMCOUNT');
 
     return $helper->generateForm($fields_form);
   }
 
 
   public function hookLampAccessories(&$params) {
-    $la_per_tab = Configuration::get('LAMPACCESSORIES_PER_TAB');
-    if(empty($la_per_tab)) {
-      $la_per_tab = 4;
-      Configuration::set('LAMPACCESSORIES_PER_TAB', 4);
+    $la_itemcount = Configuration::get('LAMPACCESSORIES_ITEMCOUNT');
+    if(empty($la_itemcount)) {
+      $la_itemcount = 4;
+      Configuration::set('LAMPACCESSORIES_ITEMCOUNT', 4);
     }
+      $la_tabcount = Configuration::get('LAMPACCESSORIES_TABCOUNT');
+    if(empty($la_tabcount)) {
+      $la_tabcount = 4;
+      Configuration::set('LAMPACCESSORIES_TABCOUNT', 4);
+    }
+    
     $context = Context::getContext();
     $controller = $context->controller;
     $id_lang = (int)$context->language->id;
@@ -172,7 +198,7 @@ class LampAccessories extends Module {
       LEFT JOIN ps_image i
         ON i.id_product = p.id_product
           AND i.cover=1
-      WHERE p.id_category_default IN ($sCatIds)
+      WHERE p.id_category_default IN ($sCatIds) AND p.active=1
       ";
 
     $lampAccessoriesAll = Db::getInstance()->executeS(
@@ -180,16 +206,26 @@ class LampAccessories extends Module {
     );
 
     $lampAccessories = array();
+    $lampAccessoriesCount = array();
     foreach($lampAccessoriesAll as $lampAccessory) {
-      if(count($lampAccessories[$lampAccessory['category']])>=$la_per_tab)
+      if(count($lampAccessories[$lampAccessory['category']]) >= $la_itemcount)
         continue;
       $imageLink = LinkCore::getImageLink($lampAccessory['link_rewrite'], $lampAccessory['id_image']);
       $lampAccessory['image_link'] = 'http://' .$imageLink;
       $lampAccessories[$lampAccessory['category']][] = $lampAccessory;
     }
+    foreach ($lampAccessories as $ind => $cat) {
+      $lampAccessoriesCount[$ind] = count($cat);
+    }
+    arsort($lampAccessoriesCount);
+    $lampAccessoriesSorted = array();
+    foreach($lampAccessoriesCount as $ind => $count) {
+      $lampAccessoriesSorted[] = $lampAccessories[$ind];
+    }
 
+    $lampAccessories = array_slice($lampAccessoriesSorted, 0, $la_tabcount);
 
-      $this->context->smarty->assign(
+    $this->context->smarty->assign(
       array(
         'lampaccessories' => $lampAccessories,
         'my_module_name' => Configuration::get('LAMPACCESSORIES_NAME'),
@@ -197,10 +233,6 @@ class LampAccessories extends Module {
       )
     );
     return $this->display(__FILE__, 'lampaccessories.tpl');
-  }
-
-  public function hookDisplayRightColumn(&$params) {
-    return $this->hookLampAccessories($params);
   }
 
   public function hookDisplayHeader()
