@@ -9,7 +9,12 @@
 class ProductController extends ProductControllerCore
 {
 
-  public function initContent() {
+  /*
+	* module: LampAccessories
+	* date: 2016-01-31 11:34:05
+	* version: 1.0
+	*/
+	public function initContent() {
 
     if (!$this->errors) {
       $lampStart = 0;
