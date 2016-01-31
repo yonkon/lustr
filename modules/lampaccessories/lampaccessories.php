@@ -16,7 +16,7 @@ class LampAccessories extends Module {
 
     parent::__construct();
 
-    $this->displayName = $this->l('Lamp Accessoriese');
+    $this->displayName = $this->l('Lamp Accessories');
     $this->description = $this->l('Original module for Lamplus. Display associated lamps on product page');
 
     $this->confirmUninstall = $this->l('Are you sure you want to uninstall?');
