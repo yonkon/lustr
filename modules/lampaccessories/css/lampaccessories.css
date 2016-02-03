@@ -226,5 +226,6 @@ span.lampaccessories_error {
   input.lampaccessories_pr_count {
     font-size: 18px;
     padding: 1px 5px;
+    max-width: 30px;
   }
 }
