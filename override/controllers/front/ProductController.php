@@ -10,8 +10,8 @@ class ProductController extends ProductControllerCore
 {
 
   /*
-	* module: LampAccessories
-	* date: 2016-01-31 11:34:05
+	* module: lampaccessories
+	* date: 2016-02-03 08:14:05
 	* version: 1.0
 	*/
 	public function initContent() {

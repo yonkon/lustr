@@ -25,14 +25,15 @@
       {foreach $lampaccessoryCategory as $lampaccessory}
       <div class="lampaccessories_pr_line">
         <div class="lampaccessories_pr_img" style="background-image: url('{$lampaccessory['image_link']}');">
-      </div>
+          <a href="{$lampaccessory['url']}" >&nbsp;</a>
+        </div>
       <div class="lampaccessories_pr_text">
         <div class="lampaccessories_pr_name">
-          <a href="javascript:void();">{$lampaccessory['name']}</a>
+          <a href="{$lampaccessory['url']}">{$lampaccessory['name']}</a>
         </div>
         <div class="lampaccessories_pr_desc">
           {$lampaccessory['description_short']}
-          <span class="lampaccessories_pr_price">{if !empty($lampaccessory['price']) && floatval($lampaccessory['price']) != 0}(+{$lampaccessory['price']} грн.){/if}</span>
+          <span class="lampaccessories_pr_price">{if !empty($lampaccessory['price']) && floatval($lampaccessory['price']) != 0}(+{convertPrice price=$lampaccessory['price']}){/if}</span>
         </div>
         <div class="lampaccessories_pr_controls">
           <form>
@@ -41,10 +42,11 @@
             <input type="hidden" name="ajax" value="true">
             <input type="hidden" name="id_product" value="{$lampaccessory['id_product']}">
             <input type="hidden" name="token" value="{$static_token}" />
-            <a class="lampaccessories_pr_incr">+</a>
+            <a class="lampaccessories_pr_decr">-</a>
           <input class="lampaccessories_pr_count" readonly="readonly" name="qty" value="1">
-          <a class="lampaccessories_pr_decr">-</a>
-          <a class="lampaccessories_pr_buy">Купить</a>
+            <a class="lampaccessories_pr_incr">+</a>
+
+            <a class="lampaccessories_pr_buy">Купить</a>
             <span class="lampaccessories_error"></span>
             <span class="lampaccessories_success"></span>
           </form>

@@ -5,7 +5,7 @@ if(!defined('_PS_VERSION_') )
 class LampAccessories extends Module {
   public function __construct()
   {
-    $this->name = 'LampAccessories';
+    $this->name = 'lampaccessories';
     $this->tab = 'front_office_features';
     $this->version = '1.0';
     $this->author = 'Vladimir Sudarkov';
@@ -170,10 +170,22 @@ class LampAccessories extends Module {
 
     $features = $prod->getFeatures($id_lang);
     $id_feature_value = null;
+    $id_feature_values = array();
+
     foreach ($features as $feature) {
-      if($feature['id_feature'] == 16) {
+      if($feature['id_feature'] == 16) { //Тип лампы
         $id_feature_value = $feature['id_feature_value'];
+        $id_feature_values[] = $feature['id_feature_value'];
       }
+      if($feature['id_feature'] == 14) { //Мощность лампы
+        $id_feature_values[] = $feature['id_feature_value'];
+      }
+      if($feature['id_feature'] == 38) { //Класс лампы
+        $id_feature_values[] = $feature['id_feature_value'];
+      }
+      //      if($feature['id_feature'] == 14) { //Напряжение лампы
+//        $id_feature_values[] = $feature['id_feature_value'];
+//      }
     }
 
     if(empty($id_feature_value))
@@ -188,18 +200,43 @@ class LampAccessories extends Module {
     }
     $sCatIds = join(', ', $lampIdCategories);
 // $sCatIds=$prod->id_category_default;
-    $sql = "SELECT p.*, pl.*, cl.name AS category, f.*, i.id_image
+    $sIdFeatureValues = join(', ', $id_feature_values);
+    $sIdFeatureValues = '';
+    $id_feature_values_count = count($id_feature_values);
+    for ($i = 0; $i < $id_feature_values_count; $i++) {
+      $id_fv = $id_feature_values[$i];
+      $sIdFeatureValues .= "
+      JOIN ps_feature_product f{$i}
+        ON f{$i}.id_product = p.id_product
+          AND f{$i}.id_feature_value = {$id_fv}
+";
+    }
+
+//    $sql = "SELECT p.*, pl.*, cl.name AS category, f.*, i.id_image
+    $sql = "SELECT p.*, pl.*, cl.name AS category, i.id_image
       FROM ps_product p
       JOIN ps_product_lang pl ON pl.id_product = p.id_product AND pl.id_lang={$id_lang}
       JOIN ps_category_lang cl ON cl.id_category=p.id_category_default AND cl.id_lang={$id_lang}
-      JOIN ps_feature_product f
-        ON f.id_product = p.id_product
-          AND f.id_feature_value = {$id_feature_value}
+      {$sIdFeatureValues}
       LEFT JOIN ps_image i
         ON i.id_product = p.id_product
           AND i.cover=1
       WHERE p.id_category_default IN ($sCatIds) AND p.active=1
+      ORDER BY  p.price DESC
       ";
+//    $sql = "SELECT p.*, pl.*, cl.name AS category, i.id_image
+//      FROM ps_product p
+//      JOIN ps_product_lang pl ON pl.id_product = p.id_product AND pl.id_lang={$id_lang}
+//      JOIN ps_category_lang cl ON cl.id_category=p.id_category_default AND cl.id_lang={$id_lang}
+//      JOIN ps_feature_product f
+//        ON f.id_product = p.id_product
+//          AND f.id_feature_value = {$id_feature_value}
+//      LEFT JOIN ps_image i
+//        ON i.id_product = p.id_product
+//          AND i.cover=1
+//      WHERE p.id_category_default IN ($sCatIds) AND p.active=1
+//      ORDER BY  p.price DESC
+//      ";
 
     $lampAccessoriesAll = Db::getInstance()->executeS(
       $sql
@@ -210,7 +247,9 @@ class LampAccessories extends Module {
     foreach($lampAccessoriesAll as $lampAccessory) {
       if(count($lampAccessories[$lampAccessory['category']]) >= $la_itemcount)
         continue;
-      $imageLink = LinkCore::getImageLink($lampAccessory['link_rewrite'], $lampAccessory['id_image']);
+      $imageLink = Link::getImageLink($lampAccessory['link_rewrite'], $lampAccessory['id_image']);
+      $productLink = $context->link->getProductLink($lampAccessory);
+      $lampAccessory['url'] = $productLink;
       $lampAccessory['image_link'] = 'http://' .$imageLink;
       $lampAccessories[$lampAccessory['category']][] = $lampAccessory;
     }
