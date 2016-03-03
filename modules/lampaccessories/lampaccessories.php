@@ -1,13 +1,15 @@
 <?php
 if(!defined('_PS_VERSION_') )
- exit;
-
+  exit;
+/*
+ * updated 3.03.2016
+ */
 class LampAccessories extends Module {
   public function __construct()
   {
     $this->name = 'lampaccessories';
     $this->tab = 'front_office_features';
-    $this->version = '1.0';
+    $this->version = '1.1';
     $this->author = 'Vladimir Sudarkov';
     $this->need_instance = 0;
     $this->ps_versions_compliancy = array('min' => '1.5', 'max' => '1.7');
@@ -67,7 +69,7 @@ class LampAccessories extends Module {
         Configuration::updateValue('LAMPACCESSORIES_ITEMCOUNT', intval($la_itemcount));
         $output .= $this->displayConfirmation($this->l('Settings updated'));
       }
-      
+
     }
     return $output.$this->displayForm();
   }
@@ -150,12 +152,12 @@ class LampAccessories extends Module {
       $la_itemcount = 4;
       Configuration::set('LAMPACCESSORIES_ITEMCOUNT', 4);
     }
-      $la_tabcount = Configuration::get('LAMPACCESSORIES_TABCOUNT');
+    $la_tabcount = Configuration::get('LAMPACCESSORIES_TABCOUNT');
     if(empty($la_tabcount)) {
       $la_tabcount = 4;
       Configuration::set('LAMPACCESSORIES_TABCOUNT', 4);
     }
-    
+
     $context = Context::getContext();
     $controller = $context->controller;
     $id_lang = (int)$context->language->id;
@@ -172,27 +174,84 @@ class LampAccessories extends Module {
     $id_feature_value = null;
     $id_feature_values = array();
 
+    $power_ids = array( // id_feature_value, // lang value
+      152, //100
+      28, //60
+      87, //50
+      7, //42
+      183, //40
+      64, //35
+      270, //30
+      22, //28
+      247, //20
+      253, //18
+      267, //10
+      217, //2
+      298, //1
+      231, //0.24
+      209, //0.1
+    );
+
+    $sql = "SELECT v.*, l.*, l_n.id_feature_value AS id_feature_value_n, v_n.id_feature AS id_feature2
+FROM `ps_feature_value` v
+JOIN ps_feature_value_lang l
+	ON l.`id_feature_value` = v.`id_feature_value`
+AND l.id_lang = 1
+AND id_feature = 15
+JOIN ps_feature_value_lang l_n
+  ON l_n.value = l.value
+JOIN ps_feature_value v_n
+  ON v_n.id_feature_value = l_n.id_feature_value
+  AND v_n.id_feature IN (41, 42, 40)
+      ";
+    $lampTypeFVs = Db::getInstance()->executeS(
+      $sql
+    );
+    $lampTypeN_Values = array(); //id_feature для тип лампочки 1,2,3 (id_feature 40-42) => id_feature для тип лампы (id_feature 15)
+    foreach($lampTypeFVs as $ltfv) {
+      $lampTypeN_Values[$ltfv['id_feature_value_n']][] = $ltfv['id_feature_value'];
+    }
+
+
     foreach ($features as $feature) {
-      if($feature['id_feature'] == 16) { //Тип лампы
+
+      if($feature['id_feature'] == 16) { //Тип цоколя
         $id_feature_value = $feature['id_feature_value'];
         $id_feature_values[] = $feature['id_feature_value'];
       }
+
+      if(in_array($feature['id_feature'], array(40, 41, 42) ) ) { //Тип лампы 1,2,3
+        if(!isset($id_feature_values[15])) {
+          $id_feature_values[15] = array();
+        }
+        $id_feature_value = $lampTypeN_Values[$feature['id_feature_value']];
+        $id_feature_values[15] = array_merge($id_feature_values[15], $lampTypeN_Values[$feature['id_feature_value']] ); //15 - Тип лампы
+      }
+
       if($feature['id_feature'] == 14) { //Мощность лампы
-        $id_feature_values[] = $feature['id_feature_value'];
+        $power_ind = array_search($feature['id_feature_value'], $power_ids);
+        if($power_ind === false) {
+          $id_feature_values[] = $feature['id_feature_value'];
+        } else {
+          $id_feature_values[] = array_slice($power_ids, $power_ind);
+        }
       }
-      if($feature['id_feature'] == 38) { //Класс лампы
-        $id_feature_values[] = $feature['id_feature_value'];
-      }
-      //      if($feature['id_feature'] == 14) { //Напряжение лампы
+
+//      if($feature['id_feature'] == 38) { //Класс лампы
 //        $id_feature_values[] = $feature['id_feature_value'];
 //      }
+
+      if($feature['id_feature'] == 43) { //Код лампочек
+        $id_feature_values[] = $feature['id_feature_value'];
+      }
+
     }
+
 
     if(empty($id_feature_value))
       return '';
 
     $lampIdCategory = 42;
-//    $lampIdCategory = $prod->id_category_default;
     $lampIdCategories = array($lampIdCategory);
     $lampCategories = CategoryCore::getChildren($lampIdCategory, $id_lang);
     foreach($lampCategories as $lampCategory) {
@@ -203,13 +262,20 @@ class LampAccessories extends Module {
     $sIdFeatureValues = join(', ', $id_feature_values);
     $sIdFeatureValues = '';
     $id_feature_values_count = count($id_feature_values);
-    for ($i = 0; $i < $id_feature_values_count; $i++) {
-      $id_fv = $id_feature_values[$i];
+    $i = 0;
+    foreach ($id_feature_values as $id_fv) {
+//      $id_fv = $id_feature_values[$i];
       $sIdFeatureValues .= "
       JOIN ps_feature_product f{$i}
         ON f{$i}.id_product = p.id_product
-          AND f{$i}.id_feature_value = {$id_fv}
+          AND f{$i}.id_feature_value " .
+        ( is_array($id_fv) ?
+          (" IN (" . join(', ', $id_fv)  ) .") " :
+          (" = {$id_fv}")
+        )
+        . "
 ";
+      $i++;
     }
 
 //    $sql = "SELECT p.*, pl.*, cl.name AS category, f.*, i.id_image
@@ -224,6 +290,13 @@ class LampAccessories extends Module {
       WHERE p.id_category_default IN ($sCatIds) AND p.active=1
       ORDER BY  p.price DESC
       ";
+
+    if($_REQUEST['debug'] == 2) {
+      echo $sql;
+      print_r( $lampTypeN_Values);
+      print_r( $id_feature_values);
+      echo "\nsIdFeatureValues = $sIdFeatureValues";
+    }
 //    $sql = "SELECT p.*, pl.*, cl.name AS category, i.id_image
 //      FROM ps_product p
 //      JOIN ps_product_lang pl ON pl.id_product = p.id_product AND pl.id_lang={$id_lang}
